@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "react-native": "^0.9.0",
+    "react-native-activity-view": "^0.2.4",
     "react-native-sglistview": "^0.1.2"
   }
 }

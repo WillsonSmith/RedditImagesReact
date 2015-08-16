@@ -1395,7 +1395,7 @@ throw new TypeError(
 
 var index=findIndex.call(this, predicate, context);
 return index === -1?undefined:this[index];}});}})();
-__d('RedditImagesReact/index.ios.js',["react-native/Libraries/react-native/react-native.js","react-native-sglistview/index.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  'use strict';function _toConsumableArray(arr){if(Array.isArray(arr)){for(var i=0, arr2=Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];return arr2;}else {return Array.from(arr);}}
+__d('RedditImagesReact/index.ios.js',["ActivityView","react-native/Libraries/react-native/react-native.js","react-native-sglistview/index.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  'use strict';function _toConsumableArray(arr){if(Array.isArray(arr)){for(var i=0, arr2=Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];return arr2;}else {return Array.from(arr);}}
 
 var React=require('react-native/Libraries/react-native/react-native.js');
 var REQUEST_URL='https://www.reddit.com/r/';
@@ -1414,9 +1414,20 @@ AppRegistry=
 
 
 
-React.AppRegistry;var StyleSheet=React.StyleSheet;var Image=React.Image;var ListView=React.ListView;var TextInput=React.TextInput;var Text=React.Text;var View=React.View;
 
+React.AppRegistry;var StyleSheet=React.StyleSheet;var Image=React.Image;var TouchableHighlight=React.TouchableHighlight;var ListView=React.ListView;var TextInput=React.TextInput;var Text=React.Text;var View=React.View;
+
+var ActivityView=require('ActivityView');
 var SGListView=require('react-native-sglistview/index.js');
+
+function isAGif(url){
+var splitUrl=url.split('.');
+var fileExtension=splitUrl[splitUrl.length - 1];
+if(fileExtension.indexOf('gif') !== -1){
+return true;}
+
+return false;}
+
 
 function getImagesFromData(data){
 
@@ -1426,7 +1437,11 @@ for(var post of posts) {
 var post_type=post.data.post_hint, 
 post_url=post.data.url;
 if(post_type === 'image' && post_url){
-image_links.push(post_url);}}
+if(isAGif(post_url)){
+image_links.push(post.data.thumbnail);}else 
+{
+image_links.push(post_url);}}}
+
 
 
 return image_links;}
@@ -1502,14 +1517,12 @@ value:this.state.text,
 multiline:false, 
 onSubmitEditing:this.getNewSubreddit}), 
 
-React.createElement(SGListView, {
+React.createElement(ListView, {
 dataSource:this.state.dataSource, 
 renderRow:this.renderImage, 
 onEndReached:this.onEndReached, 
 onEndReachedThreshold:500, 
 premptiveLoading:4, 
-
-
 style:styles.listView})));}, 
 
 
@@ -1525,6 +1538,13 @@ this.fetchData({subreddit:resultsCache.lastSubreddit, lastRendered:resultsCache.
 
 
 
+pressImage:function(imageUrl){
+ActivityView.show({
+url:imageUrl, 
+imageUrl:imageUrl});}, 
+
+
+
 renderLoadingView:function(){
 return (
 React.createElement(View, {style:styles.loadingPage}, 
@@ -1535,12 +1555,14 @@ React.createElement(Text, {style:styles.loadingPageText}, 'Loading Images...')))
 
 
 
-renderImage:function(image){
+renderImage:function(image){var _this3=this;
 return (
 React.createElement(View, {style:styles.container}, 
+React.createElement(TouchableHighlight, {style:styles.thumbnail, onPress:function(){return _this3.pressImage(image);}}, 
 React.createElement(Image, {
 source:{uri:image}, 
-style:styles.thumbnail})));}});
+style:styles.thumbnail}))));}});
+
 
 
 
@@ -50691,6 +50713,29 @@ Object.keys(componentOrElement));}
 
 
 module.exports = findDOMNode;
+});
+__d('ActivityView',["react-native/Libraries/react-native/react-native.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  'use strict';
+
+
+
+
+
+var React=require('react-native/Libraries/react-native/react-native.js');var 
+
+NativeModules=
+React.NativeModules;
+
+var NativeActivityView=NativeModules.ActivityView;
+
+
+
+
+
+var ActivityView={
+show:NativeActivityView.show};
+
+
+module.exports = ActivityView;
 });
 __d('react-native-sglistview/index.js',["react-native-sglistview/lib/SGListView.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  var SGListView=require('react-native-sglistview/lib/SGListView.js');
 

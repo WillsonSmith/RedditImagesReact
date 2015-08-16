@@ -13,12 +13,14 @@ var {
   AppRegistry,
   StyleSheet,
   Image,
+  TouchableHighlight,
   ListView,
   TextInput,
   Text,
   View,
 } = React;
 
+var ActivityView = require('react-native-activity-view');
 var SGListView = require('react-native-sglistview');
 
 function isAGif(url) {
@@ -118,7 +120,7 @@ var RedditImagesReact = React.createClass({
           multiline={false}
           onSubmitEditing={this.getNewSubreddit}
         />
-        <SGListView
+        <ListView
           dataSource={this.state.dataSource}
           renderRow={this.renderImage}
           onEndReached={this.onEndReached}
@@ -139,6 +141,13 @@ var RedditImagesReact = React.createClass({
     }
   },
 
+  pressImage: function(imageUrl) {
+    ActivityView.show({
+      url: imageUrl,
+      imageUrl: imageUrl
+    });
+  },
+
   renderLoadingView: function() {
     return (
       <View style={styles.loadingPage}>
@@ -152,10 +161,12 @@ var RedditImagesReact = React.createClass({
   renderImage: function(image) {
     return (
       <View style={styles.container}>
-        <Image
-          source={{uri: image}}
-          style={styles.thumbnail}
-        />
+        <TouchableHighlight style={styles.thumbnail} onPress={() => this.pressImage(image)}>
+          <Image
+            source={{uri: image}}
+            style={styles.thumbnail}
+          />
+        </TouchableHighlight>
       </View>
     )
   }
