@@ -1395,7 +1395,7 @@ throw new TypeError(
 
 var index=findIndex.call(this, predicate, context);
 return index === -1?undefined:this[index];}});}})();
-__d('RedditImagesReact/index.ios.js',["ActivityView","react-native/Libraries/react-native/react-native.js","react-native-sglistview/index.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  'use strict';function _toConsumableArray(arr){if(Array.isArray(arr)){for(var i=0, arr2=Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];return arr2;}else {return Array.from(arr);}}
+__d('RedditImagesReact/index.ios.js',["ActivityView","react-native/Libraries/react-native/react-native.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  'use strict';function _toConsumableArray(arr){if(Array.isArray(arr)){for(var i=0, arr2=Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];return arr2;}else {return Array.from(arr);}}
 
 var React=require('react-native/Libraries/react-native/react-native.js');
 var REQUEST_URL='https://www.reddit.com/r/';
@@ -1403,7 +1403,7 @@ var DEFAULT_SUBREDDIT='aww';
 var resultsCache={
 lastSubreddit:'', 
 lastRenderedImage:'', 
-image_links:[]};var 
+imageLinks:[]};var 
 
 
 
@@ -1415,10 +1415,52 @@ AppRegistry=
 
 
 
-React.AppRegistry;var StyleSheet=React.StyleSheet;var Image=React.Image;var TouchableHighlight=React.TouchableHighlight;var ListView=React.ListView;var TextInput=React.TextInput;var Text=React.Text;var View=React.View;
+
+React.AppRegistry;var ActivityIndicatorIOS=React.ActivityIndicatorIOS;var StyleSheet=React.StyleSheet;var Image=React.Image;var TouchableHighlight=React.TouchableHighlight;var ListView=React.ListView;var TextInput=React.TextInput;var Text=React.Text;var View=React.View;
+
+
+var styles=StyleSheet.create({
+activityIndicator:{
+marginTop:10}, 
+
+centered:{
+flex:1, 
+justifyContent:'center', 
+alignItems:'center'}, 
+
+mainWrapper:{
+marginTop:20, 
+flex:1}, 
+
+listView:{
+paddingTop:20, 
+backgroundColor:'#479ccf'}, 
+
+loadingPage:{
+flex:1, 
+backgroundColor:'#479ccf', 
+alignItems:'center', 
+justifyContent:'center'}, 
+
+loadingPageText:{
+color:'#ffffff'}, 
+
+container:{
+flex:1, 
+justifyContent:'center', 
+alignItems:'stretch', 
+backgroundColor:'#f5fcff', 
+margin:5, 
+padding:5, 
+height:200}, 
+
+thumbnail:{
+flex:1}});
+
+
 
 var ActivityView=require('ActivityView');
-var SGListView=require('react-native-sglistview/index.js');
+
 
 function isAGif(url){
 var splitUrl=url.split('.');
@@ -1432,30 +1474,29 @@ return false;}
 function getImagesFromData(data){
 
 var posts=data.data.children;
-var image_links=[];
+var imageLinks=[];
 for(var post of posts) {
-var post_type=post.data.post_hint, 
-post_url=post.data.url;
-if(post_type === 'image' && post_url){
-if(isAGif(post_url)){
-image_links.push(post.data.thumbnail);}else 
+var postType=post.data.post_hint, 
+postUrl=post.data.url;
+if(postType === 'image' && postUrl){
+if(isAGif(postUrl)){
+imageLinks.push(post.data.thumbnail);}else 
 {
-image_links.push(post_url);}}}
+imageLinks.push(postUrl);}}}
 
 
 
-return image_links;}
+return imageLinks;}
 
 
 
-function onDataLoadedEvent(responseData, imageSet){var _resultsCache$image_links;
+function onDataLoadedEvent(responseData, imageSet){var _resultsCache$imageLinks;
 resultsCache.lastRenderedImage = responseData.data.after;
-(_resultsCache$image_links = resultsCache.image_links).push.apply(_resultsCache$image_links, _toConsumableArray(imageSet));
+(_resultsCache$imageLinks = resultsCache.imageLinks).push.apply(_resultsCache$imageLinks, _toConsumableArray(imageSet));
 this.setState({
-dataSource:this.state.dataSource.cloneWithRows(resultsCache.image_links), 
+dataSource:this.state.dataSource.cloneWithRows(resultsCache.imageLinks), 
 loaded:true, 
-loadingMore:false, 
-text:'enter subreddit'});}
+loadingMore:false});}
 
 
 
@@ -1466,7 +1507,8 @@ dataSource:new ListView.DataSource({
 rowHasChanged:function(row1, row2){return row1 !== row2;}}), 
 
 loaded:false, 
-loadingMore:false};}, 
+loadingMore:false, 
+text:'enter subreddit'};}, 
 
 
 componentDidMount:function(){
@@ -1474,9 +1516,9 @@ resultsCache.lastSubreddit = DEFAULT_SUBREDDIT;
 this.fetchData({subreddit:resultsCache.lastSubreddit, lastRendered:''});}, 
 
 resetImages:function(){
-resultsCache.image_links.length = 0;
+resultsCache.imageLinks.length = 0;
 this.setState({
-dataSource:this.state.dataSource.cloneWithRows(resultsCache.image_links)});}, 
+dataSource:this.state.dataSource.cloneWithRows(resultsCache.imageLinks)});}, 
 
 
 getNewSubreddit:function(){
@@ -1491,8 +1533,8 @@ then(function(response){return response.json();}).
 then(function(responseData){
 var imageSet=getImagesFromData(responseData);
 if(typeof opts.lastRendered !== 'string'){
-if(imageSet[0] !== resultsCache.image_links[0]){
-resultsCache.image_links.length = 0;
+if(imageSet[0] !== resultsCache.imageLinks[0]){
+resultsCache.imageLinks.length = 0;
 onDataLoadedEvent.call(_this, responseData, imageSet);}}else 
 
 {
@@ -1512,6 +1554,7 @@ React.createElement(View, {style:styles.mainWrapper},
 React.createElement(TextInput, {
 autoCapitalize:'none', 
 style:{height:40}, 
+selectTextOnFocus:true, 
 onChangeText:function(text){return _this2.setState({text:text});}, 
 value:this.state.text, 
 multiline:false, 
@@ -1522,8 +1565,9 @@ dataSource:this.state.dataSource,
 renderRow:this.renderImage, 
 onEndReached:this.onEndReached, 
 onEndReachedThreshold:500, 
-premptiveLoading:4, 
-style:styles.listView})));}, 
+
+style:styles.listView, 
+renderFooter:this.renderEndLoader})));}, 
 
 
 
@@ -1561,43 +1605,21 @@ React.createElement(View, {style:styles.container},
 React.createElement(TouchableHighlight, {style:styles.thumbnail, onPress:function(){return _this3.pressImage(image);}}, 
 React.createElement(Image, {
 source:{uri:image}, 
-style:styles.thumbnail}))));}});
+style:styles.thumbnail}))));}, 
 
 
 
 
 
+renderEndLoader:function(){
+return (
+React.createElement(View, {style:styles.centered}, 
+React.createElement(Text, {style:styles.loadingPageText}, 'Loading images...'), 
 
 
-var styles=StyleSheet.create({
-mainWrapper:{
-marginTop:20, 
-flex:1}, 
+React.createElement(ActivityIndicatorIOS, {style:styles.activityIndicator, color:'#ffffff'})));}});
 
-listView:{
-paddingTop:20, 
-backgroundColor:'#479ccf'}, 
 
-loadingPage:{
-flex:1, 
-backgroundColor:'#479ccf', 
-alignItems:'center', 
-justifyContent:'center'}, 
-
-loadingPageText:{
-color:'#fff'}, 
-
-container:{
-flex:1, 
-justifyContent:'center', 
-alignItems:'stretch', 
-backgroundColor:'#F5FCFF', 
-margin:5, 
-padding:5, 
-height:200}, 
-
-thumbnail:{
-flex:1}});
 
 
 
@@ -50736,270 +50758,6 @@ show:NativeActivityView.show};
 
 
 module.exports = ActivityView;
-});
-__d('react-native-sglistview/index.js',["react-native-sglistview/lib/SGListView.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  var SGListView=require('react-native-sglistview/lib/SGListView.js');
-
-module.exports = SGListView;
-});
-__d('react-native-sglistview/lib/SGListView.js',["react-native/Libraries/react-native/react-native.js","react-native-sglistview/lib/SGListViewCell.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  var _extends=Object.assign || function(target){for(var i=1; i < arguments.length; i++) {var source=arguments[i];for(var key in source) {if(Object.prototype.hasOwnProperty.call(source, key)){target[key] = source[key];}}}return target;};var React=require('react-native/Libraries/react-native/react-native.js');var 
-ListView=React.ListView;var PropTypes=React.PropTypes;var ScrollView=React.ScrollView;
-var SGListViewCell=require('react-native-sglistview/lib/SGListViewCell.js');
-
-var SGListView=React.createClass({displayName:'SGListView', 
-
-
-
-
-
-propTypes:_extends({}, 
-
-ListView.propTypes, {
-
-
-
-
-
-
-
-
-
-renderScrollComponent:React.PropTypes.func, 
-
-
-
-
-premptiveLoading:PropTypes.number}), 
-
-
-getDefaultProps:function(){
-return {
-premptiveLoading:2};}, 
-
-
-
-
-
-
-
-componentWillMount:function(){
-
-
-
-this.cellData = {
-lastVisibleRow:0};}, 
-
-
-
-
-
-
-
-render:function(){
-return (
-React.createElement(ListView, _extends({}, this.props, {
-renderScrollComponent:this.renderScrollComponent, 
-renderRow:this.renderRow, 
-onChangeVisibleRows:this.onChangeVisibleRows})));}, 
-
-
-
-renderScrollComponent:function(props){
-if(props.renderScrollComponent){
-return props.renderScrollComponent(props);}else 
-{
-return (
-React.createElement(ScrollView, props));}}, 
-
-
-
-
-renderRow:function(rowData, sectionID, rowID){var _this=this;
-
-var view=this.props.renderRow(rowData, sectionID, rowID);
-
-
-return React.createElement(SGListViewCell, {
-usersView:view, 
-ref:function(row){
-
-
-PrvClassMethods.captureReferenceFor(_this.cellData, sectionID, rowID, row);}});}, 
-
-
-
-onChangeVisibleRows:function(visibleRows, changedRows){
-
-PrvClassMethods.updateCellsVisibility(this.cellData, changedRows);
-
-
-PrvClassMethods.updateCellsPremptively(this.props, this.cellData, visibleRows);
-
-
-if(this.props.onChangeVisibleRows){
-this.props.onChangeVisibleRows(visibleRows, changedRows);}}});
-
-
-
-
-
-
-
-
-
-
-
-var PrvClassMethods={
-captureReferenceFor:function(cellData, sectionId, rowId, row){
-if(cellData[sectionId] == undefined){
-cellData[sectionId] = {};}
-
-
-cellData[sectionId][rowId] = row;}, 
-
-
-
-
-
-updateCellsVisibility:function(cellData, changedRows){
-for(var section in changedRows) {
-if(changedRows.hasOwnProperty(section)){
-var currentSection=changedRows[section];
-
-for(var row in currentSection) {
-if(currentSection.hasOwnProperty(row)){
-var currentCell=cellData[section][row];
-var currentCellVisibility=currentSection[row];
-
-
-var isJSCell=currentCell != undefined && currentCell.setVisibility;
-
-if(isJSCell){
-
-currentCell.setVisibility(currentCellVisibility);}}}}}}, 
-
-
-
-
-
-
-
-
-
-
-
-updateCellsPremptively:function(props, cellData, visibleRows){
-if(props.premptiveLoading == false){
-return;}
-
-
-
-for(var section in visibleRows) {
-for(var row in visibleRows[section]);}
-
-var lastRow=Number(row);
-
-
-var isScrollingUp=cellData.lastVisibleRow > lastRow;
-var isScrollingDown=cellData.lastVisibleRow < lastRow;
-
-
-for(var i=1; i <= props.premptiveLoading; i++) {
-var cell;
-
-if(isScrollingUp){
-cell = cellData[section][lastRow - i];}else 
-if(isScrollingDown){
-cell = cellData[section][lastRow + i];}
-
-
-if(cell){
-cell.setVisibility(true);}else 
-{
-break;}}
-
-
-
-cellData.lastVisibleRow = lastRow;}};
-
-
-
-module.exports = SGListView;
-});
-__d('react-native-sglistview/lib/SGListViewCell.js',["react-native/Libraries/react-native/react-native.js"],function(global, require, requireDynamic, requireLazy, module, exports) {  var React=require('react-native/Libraries/react-native/react-native.js');var 
-Text=React.Text;var View=React.View;
-var PropTypes=React.PropTypes;
-
-var SGListViewCell=React.createClass({displayName:'SGListViewCell', 
-
-
-
-
-
-propTypes:{
-
-
-
-usersView:PropTypes.element.isRequired}, 
-
-
-getInitialState:function(){
-return {
-visibility:true};}, 
-
-
-
-
-
-
-componentDidMount:function(){
-
-
-this.viewProperties = {
-width:0, 
-height:0};}, 
-
-
-
-
-
-
-
-render:function(){
-if(this.state.visibility === false){
-return (
-React.createElement(View, {style:{width:this.viewProperties.width, height:this.viewProperties.height}}));}
-
-
-return (
-React.createElement(View, {onLayout:this.onLayout}, 
-this.props.usersView));}, 
-
-
-
-
-onLayout:function(evt){
-
-this.viewProperties.width = evt.nativeEvent.layout.width;
-this.viewProperties.height = evt.nativeEvent.layout.height;}, 
-
-
-
-
-
-setVisibility:function(visibility){
-if(this.state.visibility == visibility){
-return;}
-
-
-if(visibility == true){
-this.setState({visibility:true});}else 
-{
-this.setState({visibility:false});}}});
-
-
-
-
-module.exports = SGListViewCell;
 });
 ;require("RedditImagesReact/index.ios.js");
 //@ sourceMappingURL=/index.ios.map

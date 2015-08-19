@@ -99,8 +99,7 @@ function onDataLoadedEvent(responseData, imageSet) {
   this.setState({
     dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks),
     loaded: true,
-    loadingMore: false,
-    text: 'enter subreddit'
+    loadingMore: false
   });
 }
 
@@ -111,7 +110,8 @@ var RedditImagesReact = React.createClass({
         rowHasChanged: (row1, row2) => row1 !== row2
       }),
       loaded: false,
-      loadingMore: false
+      loadingMore: false,
+      text: 'enter subreddit'
     };
   },
   componentDidMount: function() {
@@ -157,6 +157,7 @@ var RedditImagesReact = React.createClass({
         <TextInput
           autoCapitalize='none'
           style={{height: 40}}
+          selectTextOnFocus={true}
           onChangeText={(text) => this.setState({text})}
           value={this.state.text}
           multiline={false}
