@@ -6,11 +6,12 @@ var DEFAULT_SUBREDDIT = 'aww';
 var resultsCache = {
   lastSubreddit: '',
   lastRenderedImage: '',
-  image_links: []
-}
+  imageLinks: []
+};
 
 var {
   AppRegistry,
+  ActivityIndicatorIOS,
   StyleSheet,
   Image,
   TouchableHighlight,
@@ -20,13 +21,54 @@ var {
   View,
 } = React;
 
+
+var styles = StyleSheet.create({
+  activityIndicator: {
+    marginTop: 10
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  mainWrapper: {
+    marginTop: 20,
+    flex: 1
+  },
+  listView: {
+    paddingTop: 20,
+    backgroundColor: '#479ccf'
+  },
+  loadingPage: {
+    flex: 1,
+    backgroundColor: '#479ccf',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  loadingPageText: {
+    color: '#ffffff'
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    backgroundColor: '#f5fcff',
+    margin: 5,
+    padding: 5,
+    height: 200
+  },
+  thumbnail: {
+    flex: 1
+  }
+});
+
 var ActivityView = require('react-native-activity-view');
-var SGListView = require('react-native-sglistview');
+//var SGListView = require('react-native-sglistview');
 
 function isAGif(url) {
   var splitUrl = url.split('.');
   var fileExtension = splitUrl[splitUrl.length - 1];
-  if (fileExtension.indexOf("gif") !== -1) {
+  if (fileExtension.indexOf('gif') !== -1) {
     return true;
   }
   return false;
@@ -35,27 +77,27 @@ function isAGif(url) {
 function getImagesFromData(data) {
 
   var posts = data.data.children;
-  var image_links = [];
+  var imageLinks = [];
   for (let post of posts) {
-    let post_type = post.data.post_hint,
-        post_url = post.data.url;
-    if (post_type === "image" && post_url) {
-      if (isAGif(post_url)) {
-        image_links.push(post.data.thumbnail);
+    let postType = post.data.post_hint,
+        postUrl = post.data.url;
+    if (postType === 'image' && postUrl) {
+      if (isAGif(postUrl)) {
+        imageLinks.push(post.data.thumbnail);
       } else {
-        image_links.push(post_url);
+        imageLinks.push(postUrl);
       }
     }
   }
-  return image_links;
+  return imageLinks;
 
 }
 
 function onDataLoadedEvent(responseData, imageSet) {
   resultsCache.lastRenderedImage = responseData.data.after;
-  resultsCache.image_links.push(...imageSet);
+  resultsCache.imageLinks.push(...imageSet);
   this.setState({
-    dataSource: this.state.dataSource.cloneWithRows(resultsCache.image_links),
+    dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks),
     loaded: true,
     loadingMore: false,
     text: 'enter subreddit'
@@ -66,7 +108,7 @@ var RedditImagesReact = React.createClass({
   getInitialState: function() {
     return {
       dataSource: new ListView.DataSource({
-        rowHasChanged: (row1, row2) => row1 !== row2,
+        rowHasChanged: (row1, row2) => row1 !== row2
       }),
       loaded: false,
       loadingMore: false
@@ -77,9 +119,9 @@ var RedditImagesReact = React.createClass({
     this.fetchData({subreddit: resultsCache.lastSubreddit, lastRendered: ''});
   },
   resetImages: function() {
-    resultsCache.image_links.length = 0;
+    resultsCache.imageLinks.length = 0;
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(resultsCache.image_links)
+      dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks)
     });
   },
   getNewSubreddit: function() {
@@ -93,9 +135,9 @@ var RedditImagesReact = React.createClass({
     .then((response) => response.json())
     .then((responseData) => {
       var imageSet = getImagesFromData(responseData);
-      if (typeof opts.lastRendered !== "string") {
-        if (imageSet[0] !== resultsCache.image_links[0]) {
-          resultsCache.image_links.length = 0;
+      if (typeof opts.lastRendered !== 'string') {
+        if (imageSet[0] !== resultsCache.imageLinks[0]) {
+          resultsCache.imageLinks.length = 0;
           onDataLoadedEvent.call(this, responseData, imageSet);
         }
       } else {
@@ -125,11 +167,12 @@ var RedditImagesReact = React.createClass({
           renderRow={this.renderImage}
           onEndReached={this.onEndReached}
           onEndReachedThreshold={500}
-          premptiveLoading={4}
+          //premptiveLoading={4}
           style={styles.listView}
+          renderFooter={this.renderEndLoader}
         />
       </View>
-    )
+    );
   },
 
   onEndReached: function() {
@@ -168,39 +211,17 @@ var RedditImagesReact = React.createClass({
           />
         </TouchableHighlight>
       </View>
-    )
-  }
-});
-
-var styles = StyleSheet.create({
-  mainWrapper: {
-    marginTop: 20,
-    flex: 1
+    );
   },
-  listView: {
-    paddingTop: 20,
-    backgroundColor: '#479ccf'
-  },
-  loadingPage: {
-    flex: 1,
-    backgroundColor: '#479ccf',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  loadingPageText: {
-    color: '#fff'
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'stretch',
-    backgroundColor: '#F5FCFF',
-    margin: 5,
-    padding: 5,
-    height: 200
-  },
-  thumbnail: {
-    flex: 1
+  renderEndLoader: function() {
+    return (
+      <View style={styles.centered}>
+      <Text style={styles.loadingPageText}>
+      Loading images...
+      </Text>
+        <ActivityIndicatorIOS style={styles.activityIndicator} color="#ffffff" />
+      </View>
+    );
   }
 });
 
