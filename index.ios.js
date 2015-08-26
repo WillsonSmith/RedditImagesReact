@@ -1,13 +1,36 @@
 'use strict';
 
 var React = require('react-native');
+var Dispatcher = require('flux').Dispatcher;
+var MicroEvent = require('./microevents.js');
 var REQUEST_URL = 'https://www.reddit.com/r/';
 var DEFAULT_SUBREDDIT = 'aww';
 var resultsCache = {
   lastSubreddit: '',
   lastRenderedImage: '',
-  imageLinks: []
+  imageLinks: [],
+  getAll: function() {
+    return this.imageLinks;
+  }
 };
+
+var AppDispatcher = new Dispatcher();
+
+MicroEvent.mixin(resultsCache);
+
+AppDispatcher.register(function(payload) {
+
+  switch( payload.eventName ) {
+    case 'load-images':
+      resultsCache.imageLinks.push(...payload.data);
+      resultsCache.trigger('change');
+      break;
+    case 'reset-images':
+      resultsCache.imageLinks.length = 0;
+      resultsCache.trigger('change');
+      break;
+  }
+});
 
 var {
   AppRegistry,
@@ -95,15 +118,14 @@ function getImagesFromData(data) {
 
 function onDataLoadedEvent(responseData, imageSet) {
   resultsCache.lastRenderedImage = responseData.data.after;
-  resultsCache.imageLinks.push(...imageSet);
-  this.setState({
-    dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks),
-    loaded: true,
-    loadingMore: false
+  AppDispatcher.dispatch({
+    eventName: 'load-images',
+    data: imageSet
   });
 }
 
 var RedditImagesReact = React.createClass({
+
   getInitialState: function() {
     return {
       dataSource: new ListView.DataSource({
@@ -114,23 +136,40 @@ var RedditImagesReact = React.createClass({
       text: 'enter subreddit'
     };
   },
-  componentDidMount: function() {
-    resultsCache.lastSubreddit = DEFAULT_SUBREDDIT;
-    this.fetchData({subreddit: resultsCache.lastSubreddit, lastRendered: ''});
-  },
-  resetImages: function() {
-    resultsCache.imageLinks.length = 0;
+
+  listChanged: function() {
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks)
+      dataSource: this.state.dataSource.cloneWithRows(resultsCache.imageLinks),
+      loaded: true,
+      loadingMore: false
     });
   },
-  getNewSubreddit: function() {
+
+  componentDidMount() {
+    resultsCache.lastSubreddit = DEFAULT_SUBREDDIT;
+    resultsCache.bind('change', this.listChanged);
+    this.fetchData({subreddit: resultsCache.lastSubreddit, lastRendered: ''});
+  },
+
+  componentWillUnmount() {
+    resultsCache.unbind('change', this.listChanged);
+  },
+
+  resetImages() {
+    AppDispatcher.dispatch({
+      eventName: 'reset-images'
+    });
+  },
+
+  getNewSubreddit() {
     this.resetImages();
     resultsCache.lastSubreddit = this.state.text;
     this.fetchData({subreddit: this.state.text});
   },
-  fetchData: function(opts = {}) {
+
+  fetchData(opts = {}) {
     opts.subreddit = opts.subreddit || resultsCache.lastSubreddit;
+
     fetch(`${REQUEST_URL}${opts.subreddit}.json?after=${opts.lastRendered}`)
     .then((response) => response.json())
     .then((responseData) => {
@@ -147,11 +186,12 @@ var RedditImagesReact = React.createClass({
     })
     .done();
   },
-  render: function() {
+
+  render() {
     if (!this.state.loaded) {
       return this.renderLoadingView();
     }
-
+    var data = resultsCache.getAll();
     return (
       <View style={styles.mainWrapper}>
         <TextInput
@@ -176,7 +216,7 @@ var RedditImagesReact = React.createClass({
     );
   },
 
-  onEndReached: function() {
+  onEndReached(evt) {
     if (!this.state.loadingMore) {
       this.setState({
         loadingMore: true
@@ -185,14 +225,14 @@ var RedditImagesReact = React.createClass({
     }
   },
 
-  pressImage: function(imageUrl) {
+  pressImage(imageUrl) {
     ActivityView.show({
       url: imageUrl,
       imageUrl: imageUrl
     });
   },
 
-  renderLoadingView: function() {
+  renderLoadingView() {
     return (
       <View style={styles.loadingPage}>
         <Text style={styles.loadingPageText}>
@@ -202,7 +242,7 @@ var RedditImagesReact = React.createClass({
     );
   },
 
-  renderImage: function(image) {
+  renderImage(image) {
     return (
       <View style={styles.container}>
         <TouchableHighlight style={styles.thumbnail} onPress={() => this.pressImage(image)}>
@@ -214,7 +254,7 @@ var RedditImagesReact = React.createClass({
       </View>
     );
   },
-  renderEndLoader: function() {
+  renderEndLoader() {
     return (
       <View style={styles.centered}>
       <Text style={styles.loadingPageText}>
